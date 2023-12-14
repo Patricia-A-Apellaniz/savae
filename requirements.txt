@@ -1,0 +1,11 @@
+pandas == 1.5.3
+pycox
+torch
+colorama
+torchtuples
+statsmodels
+tabulate
+joblib
+numpy
+matplotlib
+scipy
