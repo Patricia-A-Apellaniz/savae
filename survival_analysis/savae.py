@@ -4,7 +4,6 @@
 
 
 # Packages to import
-
 import torch
 
 import numpy as np

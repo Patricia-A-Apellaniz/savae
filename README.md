@@ -10,7 +10,7 @@ This repository provides:
 * A script to generate result tables as presented in the paper.
 * Pre-trained models to save you training time.
 
-For more details, see full paper [here]().
+For more details, see full paper [TBC]().
 
 
 <!-- GETTING STARTED -->
@@ -36,7 +36,7 @@ Download the repo manually (as a .zip file) or clone it using Git.
 
 **IMPORTANT:** If you want to change the root folder name (named savae by default), you should also change the project_name variable in _utils.py_.
 
-Download SAVAE and SOTA models weights and dictionaries with results from [here]() and place them in /savae/survival_analysis/.
+Already trained SAVAE and SOTA models and dictionaries with results can be found in /savae/survival_analysis/.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- USAGE EXAMPLES -->
