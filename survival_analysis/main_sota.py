@@ -113,8 +113,8 @@ def main():
     print(Fore.RED + '\n\n-------- SURVIVAL ANALYSIS - STATE OF THE ART MODELS --------' + Style.RESET_ALL)
 
     # Environment configuration
-    args = run_args()
-    task = 'sota_survival_analysis'
+    task = 'sota_sa'
+    args = run_args(task)
     create_output_dir(task, args)
 
     # Set seed for reproducibility

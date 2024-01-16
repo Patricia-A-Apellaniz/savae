@@ -12,7 +12,6 @@ import numpy as np
 #                      TRAINING PROCESS
 # -----------------------------------------------------------
 
-
 def check_nan_inf(values, log):
     if torch.isnan(values).any().detach().cpu().tolist() or torch.isinf(values).any().detach().cpu().tolist():
         raise RuntimeError('NAN DETECTED. ' + str(log))
@@ -72,11 +71,33 @@ def get_activations_from_types(x, feat_dists, min_val=1e-3, max_std=10.0, max_al
     return torch.cat(out, dim=1)
 
 
+def linear_rate(epoch, n_epochs, ann_prop):
+    # Adjust the KL parameter with a constant annealing rate
+    if epoch >= n_epochs * ann_prop - 1:
+        factor = 1
+    else:
+        factor = 1 / (ann_prop * n_epochs) * epoch  # Linear increase
+    return factor
+
+
+def cyclic_rate(epoch, n_epochs, n_cycles, ann_prop=0.5):
+    # Based on the paper: Cyclical Annealing Schedule: A Simple Approach to Mitigating KL Vanishing
+    epochs_per_cycle = int(np.ceil(n_epochs / n_cycles))
+    return linear_rate(epoch % epochs_per_cycle, epochs_per_cycle, ann_prop)
+
+
+def triangle_rate(epoch, n_epochs_total, n_epochs_init, init_val, ann_prop):
+    if epoch <= n_epochs_init:
+        return init_val
+    else:
+        return linear_rate(epoch - n_epochs_init, n_epochs_total - n_epochs_init, ann_prop)
+
+
 # -----------------------------------------------------------
 #                      RECONSTRUCTION PROCESS
 # -----------------------------------------------------------
 
-def sample_from_dist(params, feat_dists, ):  # Get samples from the base_model
+def sample_from_dist(params, feat_dists):  # Get samples from the base_model
     i = 0
     out_vals = []
     for type in feat_dists:

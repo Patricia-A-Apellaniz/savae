@@ -4,16 +4,21 @@
 
 
 # Packages to import
+import os
+import sys
 import math
+import joblib
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from scipy import stats
+from pathlib import Path
 from sklearn.svm import SVR
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.linear_model import BayesianRidge
+from sklearn.preprocessing import OrdinalEncoder
 from sklearn.model_selection import train_test_split, KFold
 
 
@@ -46,15 +51,12 @@ def statistics_imputation(data):
     for i in range(n_feat):
         values = data.iloc[:, i].values
         if any(pd.isnull(values)):
-            if len(np.unique(values)) == 1:
-                values = np.zeros((1,))
             no_nan_values = values[~pd.isnull(values)]
-            if no_nan_values.size <= 2 or no_nan_values.dtype in [object, str] or np.amin(
+            if values.dtype in [object, str] or no_nan_values.size <= 2 or np.amin(
                     np.equal(np.mod(no_nan_values, 1), 0)):
                 stats_value = stats.mode(no_nan_values, keepdims=True)[0][0]
             else:
-                mean_value = no_nan_values.mean()
-                stats_value = mean_value
+                stats_value = no_nan_values.mean()
             imp_data.iloc[:, i] = [stats_value if pd.isnull(x) else x for x in imp_data.iloc[:, i]]
 
     return imp_data
@@ -96,7 +98,7 @@ def get_feat_distributions(df, time=None):
         values = df.iloc[:, i].unique()
         if len(values) == 1 and math.isnan(values[0]):
             values = np.zeros((1,))
-        no_nan_values = values[~np.isnan(values)]
+        no_nan_values = values[~pd.isnull(values)]
         if no_nan_values.size <= 2 and all(np.sort(no_nan_values).astype(int) == np.array(
                 range(no_nan_values.min().astype(int), no_nan_values.min().astype(int) + len(no_nan_values)))):
             feat_dist.append(('bernoulli', 1))
@@ -121,7 +123,7 @@ def transform_data(raw_df, feat_distributions, norm_df=None):
         values = raw_df.iloc[:, i]
         if len(values) == 1 and math.isnan(values[0]):
             values = np.zeros((1,))
-        no_nan_values = values[~np.isnan(values)].values
+        no_nan_values = values[~pd.isnull(values)].values
         if dist == 'gaussian':
             loc = np.mean(no_nan_values)
             scale = np.std(no_nan_values)

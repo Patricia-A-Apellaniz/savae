@@ -8,7 +8,6 @@ import os
 import sys
 
 import torch
-import pickle
 
 import numpy as np
 import pandas as pd
@@ -19,8 +18,8 @@ sys.path.append(parent_dir)
 from savae import SAVAE
 from data import split_cv_data
 from colorama import Fore, Style
-from validation import plot_model_losses
 from joblib import Parallel, delayed
+from validation import plot_model_losses
 from utils import run_args, create_output_dir, save, check_file
 
 
@@ -108,7 +107,7 @@ def main():
     print(Fore.RED + '\n\n-------- SURVIVAL ANALYSIS  --------' + Style.RESET_ALL)
 
     # Environment configuration
-    task = 'savae_survival_analysis'
+    task = 'savae_sa'
     args = run_args(task)
     create_output_dir(task, args)
 
@@ -150,8 +149,7 @@ def main():
                 results[model_params][seed][fold]['ibs'] = res[1]
 
             # Save results
-            with open(output_dir + 'results.pkl', 'wb') as handle:
-                pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            save(results, output_dir + 'results.pkl')
 
     # Show results
     print('\n\n----SURVIVAL ANALYSIS RESULTS----')

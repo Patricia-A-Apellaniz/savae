@@ -34,29 +34,30 @@ class SAVAE(VariationalAutoencoder):
         self.time_loss = LogLikelihoodLossWithCensoring(self.time_dist)
 
     def feed_forward(self, input_data):
-        latent_params, z, cov_params = self(input_data)
-        time_params = self.Time_Decoder(z)
-        check_nan_inf(z, 'Time Decoder')
-        out = {'z': z, 'cov_params': cov_params, 'time_params': time_params, 'latent_params': latent_params}
+        out_params = self(input_data)
+        time_params = self.Time_Decoder(out_params['z'])
+        check_nan_inf(time_params, 'Time Decoder')
+        out = {'z': out_params['z'], 'cov_params': out_params['cov_params'], 'time_params': time_params,
+               'latent_params': out_params['latent_params']}
         return out
 
     def predict_time(self, x, device=torch.device('cpu')):
         cov = x.drop(['time', 'event'], axis=1)
-        latent_params, z, cov_params = self.predict(cov, device)
-        time_params = self.Time_Decoder(z)
+        out_params = self.predict(cov, device)
+        time_params = self.Time_Decoder(out_params['z'])
 
         # Sample covariate and time values
-        cov_params = cov_params.detach().cpu().numpy()
+        cov_params = out_params['cov_params'].detach().cpu().numpy()
         cov_samples = sample_from_dist(cov_params, self.feat_distributions)
         time_params = time_params.detach().cpu().numpy()
         time_samples = sample_from_dist(time_params, [self.time_dist])
 
-        out_data = {'z': z.detach().cpu().numpy(),
+        out_data = {'z': out_params['z'].detach().cpu().numpy(),
                     'cov_params': cov_params,
                     'cov_samples': cov_samples,
                     'time_params': time_params,
                     'time_samples': time_samples,
-                    'latent_params': [l.detach().cpu().numpy() for l in latent_params]}
+                    'latent_params': [l.detach().cpu().numpy() for l in out_params['latent_params']]}
 
         return out_data
 

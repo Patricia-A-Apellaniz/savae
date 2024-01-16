@@ -44,12 +44,12 @@ def create_output_dir(task, args):
     for dataset_name in args['datasets']:
         if task == 'data_preprocessing':
             os.makedirs(args['output_dir'] + dataset_name + '/', exist_ok=True)
-        elif task == 'sota_survival_analysis':
+        elif task == 'sota_sa':
             for model in args['sota_models']:
                 os.makedirs(
                     args['sota_output_dir'] + dataset_name + '/' + model + '/' + str(args['n_folds']) + '_folds/',
                     exist_ok=True)
-        elif task == 'savae_survival_analysis':
+        elif task == 'savae_sa':
             for params in args['param_comb']:
                 for seed in range(args['n_seeds']):
                     model_path = str(params['latent_dim']) + '_' + str(params['hidden_size']) + '/seed_' + str(seed)
@@ -58,7 +58,7 @@ def create_output_dir(task, args):
 
 
 # Function that sets environment configuration
-def run_args(task='savae_survival_analysis'):
+def run_args(task):
     args = {}
 
     # Data
@@ -66,6 +66,7 @@ def run_args(task='savae_survival_analysis'):
     dataset_name = 'all'
     if dataset_name == 'all':
         datasets = ['whas', 'support', 'gbsg', 'flchain', 'nwtco', 'metabric', 'pbc', 'std', 'pneumon']
+        datasets = ['whas', 'support']
     else:
         datasets.append(dataset_name)
     args['datasets'] = datasets

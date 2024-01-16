@@ -6,7 +6,7 @@
 import torch
 import numpy as np
 
-from .vae_utils import EarlyStopper, check_nan_inf
+from .vae_utils import EarlyStopper, check_nan_inf, sample_from_dist
 from .vae_modules import LatentSpaceGaussian, Encoder, Decoder, LogLikelihoodLoss
 
 
@@ -40,14 +40,16 @@ class VariationalAutoencoder(torch.nn.Module):
         latent_params = self.latent_space.get_latent_params(latent_output)
         z = self.latent_space.sample_latent(latent_params)  # Sample the latent space using the reparameterization trick
         check_nan_inf(z, 'Latent space')
-        out_params = self.Decoder(z)
-        check_nan_inf(out_params, 'Decoder')
-        return latent_params, z, out_params
+        cov_params = self.Decoder(z)
+        check_nan_inf(cov_params, 'Decoder')
+        return {'z': z, 'cov_params': cov_params, 'latent_params': latent_params}
 
     def predict(self, x, device=torch.device('cpu')):
         cov = np.array(x)
         self.eval()
         out = self(torch.from_numpy(cov).to(device).float())
+        cov_params = out['cov_params'].detach().cpu().numpy()
+        out['cov_samples'] = sample_from_dist(cov_params, self.feat_distributions)
         return out
 
     def fit_epoch(self, data, optimizer, batch_size=64, device=torch.device('cpu')):
@@ -116,14 +118,9 @@ class VariationalAutoencoder(torch.nn.Module):
         for epoch in range(train_params['n_epochs']):
             # Configure input data and missing data mask
             x_train, mask_train, x_val, mask_val = data
-            cov_train = np.array(x_train)
-            cov_val = np.array(x_val)
-            mask_train = np.array(mask_train)
-            mask_val = np.array(mask_val)
-            assert mask_train.shape == cov_train.shape
-            assert mask_val.shape == cov_val.shape
-
-            ep_data = cov_train, mask_train, cov_val, mask_val
+            assert mask_train.shape == x_train.shape
+            assert mask_val.shape == x_val.shape
+            ep_data = np.array(x_train), np.array(mask_train), np.array(x_val), np.array(mask_val)
 
             epoch_results = self.fit_epoch(ep_data, optimizer, batch_size=train_params['batch_size'],
                                            device=train_params['device'])
