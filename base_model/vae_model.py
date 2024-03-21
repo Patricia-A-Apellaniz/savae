@@ -35,6 +35,9 @@ class VariationalAutoencoder(torch.nn.Module):
         if self.early_stop:
             self.early_stopper = EarlyStopper(patience=30, min_delta=2)
 
+        self.kl_w = 1  # KL weight (could be adjusted if wanted by using linear / cyclic schedule)
+        self.cov_w = 1  # Cov weight (could be adjusted)
+
     def forward(self, input_data):
         latent_output = self.Encoder(input_data)
         latent_params = self.latent_space.get_latent_params(latent_output)
@@ -137,7 +140,7 @@ class VariationalAutoencoder(torch.nn.Module):
                       '; kl_tr = ', '{:.2f}'.format(epoch_results['kl_tr']),
                       '; kl_va = ', '{:.2f}'.format(epoch_results['kl_va']))
 
-            if self.early_stopper.stop:
+            if self.early_stop and self.early_stopper.stop:
                 print('EARLY STOP')
                 break
 

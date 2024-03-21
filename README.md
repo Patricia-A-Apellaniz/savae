@@ -34,7 +34,6 @@ Download the repo manually (as a .zip file) or clone it using Git.
    git clone https://github.com/github_username/repo_name.git
    ```
 
-**IMPORTANT:** If you want to change the root folder name (named savae by default), you should also change the project_name variable in _utils.py_.
 
 Already trained SAVAE and SOTA models and dictionaries with results can be found in /savae/survival_analysis/.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
