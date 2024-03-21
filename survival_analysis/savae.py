@@ -11,7 +11,7 @@ import pandas as pd
 
 from base_model.vae_model import VariationalAutoencoder
 from validation import obtain_c_index, bern_conf_interval
-from base_model.vae_utils import check_nan_inf, sample_from_dist
+from base_model.vae_utils import check_nan_inf, sample_from_dist, triangle_rate
 from base_model.vae_modules import Decoder, LogLikelihoodLossWithCensoring
 
 
@@ -161,6 +161,10 @@ class SAVAE(VariationalAutoencoder):
         best_ci = 0.0
         best_ibs = 1.0
         for epoch in range(train_params['n_epochs']):
+            self.kl_w = triangle_rate(epoch % 50, n_epochs_total=50, n_epochs_init=25, init_val=1 / 10000, ann_prop=0.5)
+            self.cov_w = triangle_rate(epoch % 50, n_epochs_total=50, n_epochs_init=15, init_val=1 / 10000,
+                                       ann_prop=0.5)
+
             # Configure input data and missing data mask
             x_train, mask_train, x_val, mask_val = data
             time_train = np.array(x_train.loc[:, 'time'])

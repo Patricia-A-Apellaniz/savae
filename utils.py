@@ -66,22 +66,13 @@ def run_args(task):
     dataset_name = 'all'
     if dataset_name == 'all':
         datasets = ['whas', 'support', 'gbsg', 'flchain', 'nwtco', 'metabric', 'pbc', 'std', 'pneumon']
-        datasets = ['whas', 'support']
     else:
         datasets.append(dataset_name)
     args['datasets'] = datasets
     print('[INFO] Datasets: ', datasets)
 
-    # The following lines are used to run the code both in pycharm and in the terminal
-    project_name = 'savae'  # TODO: change if project name changes
-    divided_path = os.getcwd().split('/')
-    path = []
-    for parts in divided_path:
-        if project_name in parts:
-            path.append(parts)
-            break
-        path.append(parts)
-    abs_path = '/'.join(path)
+    # Absolute path
+    abs_path = os.path.dirname(os.path.abspath(__file__)) + os.sep
 
     # Depending on the task, set the arguments
     if task == 'data_preprocessing':
@@ -107,7 +98,7 @@ def run_args(task):
         args['sota_models'] = ['coxph', 'deepsurv', 'deephit'] if model_name == 'all' else [model_name]
 
         # SAVAE hyperparameters
-        args['n_threads'] = 65
+        args['n_threads'] = 15
         args['n_seeds'] = 10
         default_params = True
         args['param_comb'] = [{'hidden_size': 50, 'latent_dim': 5}] if default_params else parameter_combination()
