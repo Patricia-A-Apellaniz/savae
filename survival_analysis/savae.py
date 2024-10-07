@@ -27,6 +27,7 @@ class SAVAE(VariationalAutoencoder):
         # Add another decoder to architecture (time prediction module)
         self.Time_Decoder = Decoder(latent_dim=self.latent_dim,
                                     hidden_size=self.hidden_size,
+                                    dropout_p=self.dropout_p,
                                     feat_dists=[self.time_dist],
                                     max_k=self.max_t)
 
@@ -41,8 +42,14 @@ class SAVAE(VariationalAutoencoder):
                'latent_params': out_params['latent_params']}
         return out
 
-    def predict_time(self, x, device=torch.device('cpu')):
-        cov = x.drop(['time', 'event'], axis=1)
+    def predict_just_time(self, x):
+        return self.predict_time(x, just_cov=True)['time_samples']
+
+    def predict_time(self, x, just_cov=False, device=torch.device('cpu')):
+        if not just_cov:
+            cov = x.drop(['time', 'event'], axis=1)
+        else:
+            cov = x.copy()
         out_params = self.predict(cov, device)
         time_params = self.Time_Decoder(out_params['z'])
 

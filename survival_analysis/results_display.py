@@ -17,6 +17,7 @@ from colorama import Fore, Style
 from scipy.stats import rankdata
 from scipy.stats import ttest_1samp
 from utils import run_args, check_file
+from statsmodels.stats.multitest import multipletests
 
 
 def main():
@@ -31,12 +32,14 @@ def main():
         mrr = []
         min_max_table = []
         p_values_table = []
+        holm_p_values_table = []
         round_format = '.2f' if metric == 'ci' else '.3f'
         for dataset_name in args['datasets']:
             mrr_dataset = []
             min_max_dataset = [dataset_name]
             p_values_dataset = [dataset_name]
             sota_folds = []
+
             # Obtain sota avg metrics
             for model in args['sota_models']:
                 # Load results
@@ -89,6 +92,8 @@ def main():
             mrr.append(mrr_dataset)
             min_max_table.append(min_max_dataset)
             p_values_table.append(p_values_dataset)
+            holm_p_values_table.append([p_values_dataset[0]] + list(multipletests(p_values_dataset[1:], alpha=0.05, method='holm')[1]))
+
 
         # Show metric (min-max) table results
         headers = ['DATASET', 'COXPH', 'DEEPSURV', 'DEEPHIT', 'SAVAE']
@@ -103,6 +108,14 @@ def main():
         print('\n\n')
         print(metric + ' (p_values) RESULTS')
         print(tabulate(p_values_table, headers='firstrow', tablefmt='grid'))
+
+        # Show p_values adjustment based on Holm method table results
+        headers = ['DATASET', 'COXPH', 'DEEPSURV', 'DEEPHIT']
+        holm_p_values_table.insert(0, headers)
+        print('\n\n')
+        print(metric + ' (adjusted p_values) RESULTS')
+        print(tabulate(holm_p_values_table, headers='firstrow', tablefmt='grid'))
+        print(tabulate(holm_p_values_table, headers='firstrow', tablefmt='latex'))
 
         # Calculate MRR
         ranks = []

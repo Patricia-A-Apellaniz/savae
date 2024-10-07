@@ -21,12 +21,13 @@ class VariationalAutoencoder(torch.nn.Module):
         self.latent_dim = params['latent_dim']
         self.hidden_size = params['hidden_size']
         self.early_stop = params['early_stop']
+        self.dropout_p = params['dropout_prop']
 
         # Standard VAE modules. Encoder and Latent Space
         self.latent_space = LatentSpaceGaussian(self.latent_dim)
         self.Encoder = Encoder(input_dim=self.input_dim, hidden_dim=self.hidden_size,
                                output_dim=self.latent_space.latent_params)
-        self.Decoder = Decoder(latent_dim=self.latent_dim, hidden_size=self.hidden_size,
+        self.Decoder = Decoder(latent_dim=self.latent_dim, hidden_size=self.hidden_size, dropout_p=self.dropout_p,
                                feat_dists=self.feat_distributions)
 
         # Define losses

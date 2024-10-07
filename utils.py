@@ -43,18 +43,25 @@ def parameter_combination():
 def create_output_dir(task, args):
     for dataset_name in args['datasets']:
         if task == 'data_preprocessing':
-            os.makedirs(args['output_dir'] + dataset_name + '/', exist_ok=True)
-        elif task == 'sota_sa':
+            os.makedirs(args['output_dir'] + dataset_name + os.sep, exist_ok=True)
+        elif 'sota_sa' in task:
             for model in args['sota_models']:
-                os.makedirs(
-                    args['sota_output_dir'] + dataset_name + '/' + model + '/' + str(args['n_folds']) + '_folds/',
-                    exist_ok=True)
-        elif task == 'savae_sa':
+                os.makedirs(args['sota_output_dir'] + dataset_name + os.sep + model + os.sep + str(
+                    args['n_folds']) + '_folds' + os.sep, exist_ok=True)
+        elif 'savae_sa' in task:
             for params in args['param_comb']:
                 for seed in range(args['n_seeds']):
-                    model_path = str(params['latent_dim']) + '_' + str(params['hidden_size']) + '/seed_' + str(seed)
-                    os.makedirs(args['output_dir'] + dataset_name + '/' + str(args['n_folds']) + '_folds/' +
-                                model_path + '/', exist_ok=True)
+                    model_path = str(params['latent_dim']) + '_' + str(params['hidden_size']) + os.sep + 'seed_' + str(
+                        seed)
+                    os.makedirs(args['output_dir'] + dataset_name + os.sep + str(
+                        args['n_folds']) + '_folds' + os.sep + model_path + os.sep, exist_ok=True)
+        elif task == 'ablation_study':
+            for params in args['param_comb']:
+                for seed in range(args['n_seeds']):
+                    model_path = str(params['latent_dim']) + '_' + str(params['hidden_size']) + '_' + str(
+                        params['dropout_prop']) + os.sep + 'seed_' + str(seed)
+                    os.makedirs(args['output_dir'] + dataset_name + os.sep + str(
+                        args['n_folds']) + '_folds' + os.sep + model_path + os.sep, exist_ok=True)
 
 
 # Function that sets environment configuration
@@ -76,10 +83,10 @@ def run_args(task):
 
     # Depending on the task, set the arguments
     if task == 'data_preprocessing':
-        args['output_dir'] = abs_path + '/data_preprocessing/data/'
-        args['input_dir'] = abs_path + '/data_preprocessing/raw_data/'
+        args['output_dir'] = abs_path + 'data_preprocessing' + os.sep + 'data' + os.sep
+        args['input_dir'] = abs_path + 'data_preprocessing' + os.sep + 'raw_data' + os.sep
     else:
-        args['input_dir'] = abs_path + '/data_preprocessing/data/'
+        args['input_dir'] = abs_path + 'data_preprocessing' + os.sep + 'data' + os.sep
 
         # Training and testing configurations for savae and sota models
         args['train'] = False
@@ -92,19 +99,69 @@ def run_args(task):
         args['time_distribution'] = ('weibull', 2)
 
         # SOTA models
-        args['sota_output_dir'] = abs_path + '/survival_analysis/output_sota_' + str(args['n_folds']) + '_folds_' + str(
-            args['batch_size']) + '_batch_size_' + args['time_distribution'][0] + '/'
+        args['sota_output_dir'] = abs_path + 'survival_analysis' + os.sep + 'output_sota_' + str(
+            args['n_folds']) + '_folds_' + str(args['batch_size']) + '_batch_size_' + args['time_distribution'][
+                                      0] + os.sep
         model_name = 'all'
         args['sota_models'] = ['coxph', 'deepsurv', 'deephit'] if model_name == 'all' else [model_name]
 
-        # SAVAE hyperparameters
-        args['n_threads'] = 15
-        args['n_seeds'] = 10
-        default_params = True
-        args['param_comb'] = [{'hidden_size': 50, 'latent_dim': 5}] if default_params else parameter_combination()
+        if task == 'ablation_study':
+            args['early_stop'] = True
+            args['n_threads'] = 50
+            args['n_seeds'] = 10
+            args[
+                'output_dir'] = abs_path + 'survival_analysis' + os.sep + 'supplementary_tests' + os.sep + 'AS_output_savae_' + str(
+                args['n_folds']) + '_folds_' + str(args['batch_size']) + '_batch_size_' + args['time_distribution'][
+                                    0] + os.sep
 
-        # SAVAE output folders
-        args['output_dir'] = abs_path + '/survival_analysis/output_savae_' + str(args['n_folds']) + '_folds_' + str(
-            args['batch_size']) + '_batch_size_' + args['time_distribution'][0] + '/'
+            # Compare different parameter results
+            latent_dim = [3, 5, 50]
+            hidden_size = [10, 50, 500]
+            dropout_prop = [0.0, 0.2, 0.5]
+            param_comb = []
+            for hidden in hidden_size:
+                for latent in latent_dim:
+                    for dropout in dropout_prop:
+                        new_params = {'hidden_size': hidden, 'latent_dim': latent, 'dropout_prop': dropout}
+                        param_comb.append(new_params)
+            args['param_comb'] = param_comb
+            print(args['param_comb'])
+
+        elif task == 'sensitivity_savae_sa':
+            datasets = []
+            dataset_name = 'all'
+            if dataset_name == 'all':
+                datasets = ['whas', 'gbsg', 'flchain', 'nwtco']
+            else:
+                datasets.append(dataset_name)
+            args['datasets'] = datasets
+
+            # SAVAE hyperparameters
+            args['n_folds'] = 2
+            args['n_epochs'] = 3000
+            args['n_threads'] = 1
+            args['n_seeds'] = 1
+            default_params = True
+            args['param_comb'] = [{'hidden_size': 50, 'latent_dim': 5,
+                                   'dropout_prop': 0.2}] if default_params else parameter_combination()
+
+            # SAVAE output folders
+            args[
+                'output_dir'] = abs_path + 'survival_analysis' + os.sep + 'supplementary_tests' + os.sep + 'SENSITIVITY_output_savae_' + str(
+                args['n_folds']) + '_folds_' + str(args['batch_size']) + '_batch_size_' + args['time_distribution'][
+                                    0] + os.sep
+
+        else:
+            # SAVAE hyperparameters
+            args['n_threads'] = 35
+            args['n_seeds'] = 10
+            default_params = True
+            args['param_comb'] = [{'hidden_size': 50, 'latent_dim': 5,
+                                   'dropout_prop': 0.2}] if default_params else parameter_combination()
+
+            # SAVAE output folders
+            args['output_dir'] = abs_path + 'survival_analysis' + os.sep + 'output_savae_' + str(
+                args['n_folds']) + '_folds_' + str(args['batch_size']) + '_batch_size_' + args['time_distribution'][
+                                     0] + os.sep
 
     return args
